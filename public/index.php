@@ -105,6 +105,7 @@ if (!$needsSetup) {
 
     // API URLs
     $router->post('/api/urls/{id}/delete', '\LlmsApp\Controllers\UrlController@deleteApi');
+    $router->post('/api/urls/extract-meta', '\LlmsApp\Controllers\AiController@extractMetaTags');
 
     // Costi AI
     $router->get('/costs', '\LlmsApp\Controllers\CostController@index');

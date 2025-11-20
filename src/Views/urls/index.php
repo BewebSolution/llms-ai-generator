@@ -475,6 +475,12 @@ document.getElementById('jumpToPage').addEventListener('keypress', function(e) {
                 <?php if ($openaiEnabled && !empty($openaiKey)): ?>
                 <div style="margin-left: auto; display: flex; gap: 10px;">
                     <button type="button"
+                            onclick="extractMetaForSelected()"
+                            style="background: #17a2b8; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer;"
+                            title="Estrae title e meta description dalle pagine (senza AI, usa AI solo per classificare il tipo)">
+                        📋 Estrai Meta Tags
+                    </button>
+                    <button type="button"
                             onclick="generateAIForSelected()"
                             style="background: linear-gradient(135deg, #667eea, #764ba2); color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer;"
                             title="Genera titoli, descrizioni e classificazioni con AI per gli URL selezionati (salvataggio automatico)">
@@ -1592,5 +1598,197 @@ async function deleteSelectedUrls() {
     if (remainingRows.length === 0) {
         location.reload();
     }
+}
+
+// ===== FUNZIONI PER ESTRAZIONE META TAGS (SENZA AI) =====
+
+// Estrae meta tags per una singola riga
+async function extractMetaForRow(rowId) {
+    const row = document.querySelector(`tr[data-url-row-id="${rowId}"]`);
+    const titleInput = row.querySelector('.url-title-input');
+    const descInput = row.querySelector('.url-desc-input');
+    const typeSpan = row.querySelector('.url-type-badge');
+    const statusSpan = row.querySelector('.ai-status');
+    const url = titleInput.dataset.url;
+
+    statusSpan.innerHTML = '⏳';
+
+    try {
+        const response = await fetch('<?= htmlspecialchars($baseUrl) ?>/api/urls/extract-meta', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                urlId: rowId,
+                url: url,
+                classifyType: true // Classifica solo il tipo con AI
+            })
+        });
+
+        const data = await response.json();
+
+        if (data.error) {
+            statusSpan.innerHTML = '❌';
+            console.error('Errore estrazione:', data.error);
+            return false;
+        }
+
+        let updated = false;
+
+        // Aggiorna titolo se estratto
+        if (data.title) {
+            titleInput.value = data.title;
+            titleInput.style.backgroundColor = '#d1f2eb'; // Verde acqua per indicare estratto
+            setTimeout(() => {
+                titleInput.style.backgroundColor = '';
+            }, 2000);
+            updated = true;
+        }
+
+        // Aggiorna descrizione se estratta
+        if (data.description) {
+            descInput.value = data.description;
+            descInput.style.backgroundColor = '#d1f2eb';
+            setTimeout(() => {
+                descInput.style.backgroundColor = '';
+            }, 2000);
+            updated = true;
+        }
+
+        // Aggiorna tipo se classificato
+        if (data.type && typeSpan) {
+            typeSpan.textContent = data.type + ' ▼';
+            typeSpan.style.background = getTypeColor(data.type);
+
+            // Aggiorna anche il select nascosto
+            const typeSelect = row.querySelector('.url-type-select');
+            if (typeSelect) {
+                typeSelect.value = data.type;
+            }
+            updated = true;
+        }
+
+        if (updated) {
+            if (data.saved === true) {
+                statusSpan.innerHTML = '✅📋'; // Check + clipboard per indicare estratto e salvato
+                statusSpan.title = 'Meta tags estratti e salvati';
+            } else {
+                statusSpan.innerHTML = '✅';
+            }
+            setTimeout(() => {
+                statusSpan.innerHTML = '';
+            }, 3000);
+            return true;
+        }
+
+        statusSpan.innerHTML = '⚠️';
+        statusSpan.title = 'Nessun meta tag trovato';
+        return false;
+
+    } catch (error) {
+        statusSpan.innerHTML = '❌';
+        console.error('Errore:', error);
+        return false;
+    }
+}
+
+// Estrae meta tags per tutti gli URL selezionati
+async function extractMetaForSelected() {
+    const selectedCheckboxes = document.querySelectorAll('.url-checkbox:checked');
+
+    if (selectedCheckboxes.length === 0) {
+        alert('Seleziona almeno un URL');
+        return;
+    }
+
+    if (!confirm(`Estrarre meta tags per ${selectedCheckboxes.length} URL selezionati?\n\nQuesta operazione:\n- Estrae title e description dalle pagine\n- NON usa AI per generare contenuti\n- Usa AI solo per classificare il tipo`)) {
+        return;
+    }
+
+    // Mostra progress
+    const progressDiv = document.getElementById('ai-progress');
+    const progressBar = document.getElementById('ai-progress-bar');
+    const statusText = document.getElementById('ai-status');
+
+    progressDiv.style.display = 'block';
+
+    let processed = 0;
+    let successful = 0;
+    let failed = 0;
+
+    for (const checkbox of selectedCheckboxes) {
+        const row = checkbox.closest('tr[data-url-row-id]');
+        if (!row) continue;
+
+        const rowId = row.dataset.urlRowId;
+
+        statusText.textContent = `Estraendo meta tags ${processed + 1} di ${selectedCheckboxes.length}...`;
+        progressBar.style.width = ((processed / selectedCheckboxes.length) * 100) + '%';
+
+        const success = await extractMetaForRow(rowId);
+
+        if (success) {
+            successful++;
+        } else {
+            failed++;
+        }
+
+        processed++;
+
+        // Pausa breve tra richieste per non sovraccaricare
+        await new Promise(resolve => setTimeout(resolve, 500));
+    }
+
+    progressBar.style.width = '100%';
+    statusText.textContent = `✅ Completato! Estratti ${successful} meta tags${failed > 0 ? `, ${failed} errori` : ''}`;
+
+    setTimeout(() => {
+        progressDiv.style.display = 'none';
+    }, 3000);
+}
+
+// Estrae meta tags per tutti gli URL visibili nella pagina
+async function extractMetaForVisible() {
+    const visibleRows = document.querySelectorAll('tr[data-url-row-id]');
+
+    if (!confirm(`Estrarre meta tags per i ${visibleRows.length} URL in questa pagina?`)) {
+        return;
+    }
+
+    const progressDiv = document.getElementById('ai-progress');
+    const progressBar = document.getElementById('ai-progress-bar');
+    const statusText = document.getElementById('ai-status');
+
+    progressDiv.style.display = 'block';
+
+    let processed = 0;
+    let successful = 0;
+    let failed = 0;
+
+    for (const row of visibleRows) {
+        const rowId = row.dataset.urlRowId;
+
+        statusText.textContent = `Estraendo meta tags ${processed + 1} di ${visibleRows.length}...`;
+        progressBar.style.width = ((processed / visibleRows.length) * 100) + '%';
+
+        const success = await extractMetaForRow(rowId);
+
+        if (success) {
+            successful++;
+        } else {
+            failed++;
+        }
+
+        processed++;
+        await new Promise(resolve => setTimeout(resolve, 500));
+    }
+
+    progressBar.style.width = '100%';
+    statusText.textContent = `✅ Completato! Estratti ${successful} meta tags${failed > 0 ? `, ${failed} errori` : ''}`;
+
+    setTimeout(() => {
+        progressDiv.style.display = 'none';
+    }, 3000);
 }
 </script>

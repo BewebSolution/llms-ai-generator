@@ -260,4 +260,85 @@ class WebScraperService
             return false;
         }
     }
+
+    /**
+     * Estrae SOLO meta tags (versione leggera, no contenuto)
+     */
+    public function scrapeMetaOnly(string $url): ?array
+    {
+        try {
+            // Configura client con timeout ridotto
+            $client = new \GuzzleHttp\Client([
+                'timeout' => 5, // Solo 5 secondi
+                'verify' => false,
+                'headers' => [
+                    'User-Agent' => 'Mozilla/5.0 (compatible; LLMS.txt Generator/1.0)',
+                    'Range' => 'bytes=0-50000' // Scarica solo primi 50KB
+                ]
+            ]);
+
+            $response = $client->get($url);
+
+            if ($response->getStatusCode() !== 200 && $response->getStatusCode() !== 206) {
+                return null;
+            }
+
+            // Prendi solo i primi 50KB di HTML
+            $html = substr((string) $response->getBody(), 0, 50000);
+
+            // Estrai solo head section
+            if (preg_match('/<head[^>]*>(.*?)<\/head>/si', $html, $headMatch)) {
+                $headHtml = $headMatch[1];
+            } else {
+                $headHtml = $html; // Fallback
+            }
+
+            $result = [
+                'title' => '',
+                'meta_description' => '',
+                'og_title' => '',
+                'og_description' => ''
+            ];
+
+            // Estrai TITLE
+            if (preg_match('/<title[^>]*>(.*?)<\/title>/si', $headHtml, $titleMatch)) {
+                $result['title'] = html_entity_decode(trim(strip_tags($titleMatch[1])), ENT_QUOTES, 'UTF-8');
+            }
+
+            // Estrai META DESCRIPTION (gestisce entrambi gli ordini di attributi)
+            if (preg_match('/<meta\s+name=["\']description["\']\s+content=["\'](.*?)["\']/si', $headHtml, $descMatch)) {
+                $result['meta_description'] = html_entity_decode(trim($descMatch[1]), ENT_QUOTES, 'UTF-8');
+            } elseif (preg_match('/<meta\s+content=["\'](.*?)["\']\s+name=["\']description["\']/si', $headHtml, $descMatch)) {
+                $result['meta_description'] = html_entity_decode(trim($descMatch[1]), ENT_QUOTES, 'UTF-8');
+            }
+
+            // Estrai Open Graph (opzionale)
+            if (preg_match('/<meta\s+property=["\']og:title["\']\s+content=["\'](.*?)["\']/si', $headHtml, $ogTitleMatch)) {
+                $result['og_title'] = html_entity_decode(trim($ogTitleMatch[1]), ENT_QUOTES, 'UTF-8');
+            } elseif (preg_match('/<meta\s+content=["\'](.*?)["\']\s+property=["\']og:title["\']/si', $headHtml, $ogTitleMatch)) {
+                $result['og_title'] = html_entity_decode(trim($ogTitleMatch[1]), ENT_QUOTES, 'UTF-8');
+            }
+
+            if (preg_match('/<meta\s+property=["\']og:description["\']\s+content=["\'](.*?)["\']/si', $headHtml, $ogDescMatch)) {
+                $result['og_description'] = html_entity_decode(trim($ogDescMatch[1]), ENT_QUOTES, 'UTF-8');
+            } elseif (preg_match('/<meta\s+content=["\'](.*?)["\']\s+property=["\']og:description["\']/si', $headHtml, $ogDescMatch)) {
+                $result['og_description'] = html_entity_decode(trim($ogDescMatch[1]), ENT_QUOTES, 'UTF-8');
+            }
+
+            // Usa OG come fallback se non ci sono meta standard
+            if (empty($result['title']) && !empty($result['og_title'])) {
+                $result['title'] = $result['og_title'];
+            }
+
+            if (empty($result['meta_description']) && !empty($result['og_description'])) {
+                $result['meta_description'] = $result['og_description'];
+            }
+
+            return $result;
+
+        } catch (\Exception $e) {
+            error_log("Errore scraping meta per $url: " . $e->getMessage());
+            return null;
+        }
+    }
 }

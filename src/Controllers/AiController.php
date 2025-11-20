@@ -98,4 +98,79 @@ class AiController
             ]);
         }
     }
+
+    /**
+     * Estrae meta tags dalla pagina senza generazione AI
+     * L'AI viene usata solo per classificare il tipo
+     */
+    public function extractMetaTags()
+    {
+        header('Content-Type: application/json; charset=utf-8');
+
+        $input = json_decode(file_get_contents('php://input'), true);
+        $url = trim($input['url'] ?? '');
+        $urlId = $input['urlId'] ?? null;
+        $classifyType = $input['classifyType'] ?? true; // Di default classifica il tipo
+
+        if ($url === '') {
+            http_response_code(400);
+            echo json_encode(['error' => 'Missing url']);
+            return;
+        }
+
+        try {
+            $result = [];
+
+            // Usa WebScraperService per estrarre meta tags
+            $scraper = new \LlmsApp\Services\WebScraperService();
+            $metaData = $scraper->scrapeMetaOnly($url); // Metodo leggero
+
+            if ($metaData) {
+                $result['title'] = $metaData['title'] ?? '';
+                $result['description'] = $metaData['meta_description'] ?? '';
+                $result['extracted'] = true;
+            }
+
+            // Se richiesto, classifica SOLO il tipo con AI
+            if ($classifyType && !empty($result['title'])) {
+                try {
+                    $aiService = new \LlmsApp\Services\AiDescriptionService();
+                    $result['type'] = $aiService->classifyUrlType($url, $result['title']);
+                } catch (\Exception $e) {
+                    error_log("Classificazione tipo fallita: " . $e->getMessage());
+                    $result['type'] = 'OTHER';
+                }
+            }
+
+            // SALVA AUTOMATICAMENTE NEL DATABASE
+            if ($urlId && (!empty($result['title']) || !empty($result['description']) || !empty($result['type']))) {
+                try {
+                    $updateData = [];
+                    if (!empty($result['title'])) {
+                        $updateData['title'] = $result['title'];
+                    }
+                    if (!empty($result['description'])) {
+                        $updateData['short_description'] = $result['description'];
+                    }
+                    if (!empty($result['type'])) {
+                        $updateData['type'] = $result['type'];
+                    }
+
+                    Url::updateById($urlId, $updateData);
+                    $result['saved'] = true;
+
+                    error_log("Meta tags extracted and saved for URL ID: $urlId");
+                } catch (\Exception $e) {
+                    error_log("Errore salvataggio meta tags: " . $e->getMessage());
+                    $result['saved'] = false;
+                }
+            }
+
+            echo json_encode($result);
+
+        } catch (\Exception $e) {
+            http_response_code(500);
+            echo json_encode(['error' => $e->getMessage()]);
+        }
+    }
 }
