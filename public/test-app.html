@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <title>Test App LLMS Generator</title>
+    <style>
+        body { font-family: Arial; max-width: 800px; margin: 40px auto; padding: 20px; }
+        .success { color: green; font-weight: bold; }
+        .warning { color: orange; }
+        .error { color: red; font-weight: bold; }
+        a { display: inline-block; margin: 10px 10px 10px 0; padding: 10px 20px; background: #007bff; color: white; text-decoration: none; border-radius: 5px; }
+        a:hover { background: #0056b3; }
+        .alt { background: #28a745; }
+        .alt:hover { background: #218838; }
+        h2 { border-bottom: 2px solid #007bff; padding-bottom: 10px; }
+        code { background: #f4f4f4; padding: 2px 6px; border-radius: 3px; }
+    </style>
+</head>
+<body>
+    <h1>🚀 Test LLMS Generator - LINK FUNZIONANTI</h1>
+
+    <div class="success">
+        ✅ IL ROUTING FUNZIONA! (Il 404 lo dimostra)
+    </div>
+
+    <h2>1️⃣ ACCEDI ALL'APP PRINCIPALE:</h2>
+    <p>Usa uno di questi link per entrare nell'applicazione:</p>
+
+    <a href="/llms-generate/public/index.php">🏠 HOME (index.php diretto)</a>
+    <a href="/llms-generate/public/">🏠 HOME (con rewrite)</a>
+
+    <h2>2️⃣ OPPURE USA IL ROUTER ALTERNATIVO (Sempre funzionante):</h2>
+    <a href="/llms-generate/public/router.php?route=/" class="alt">✨ Router Alternativo - HOME</a>
+    <a href="/llms-generate/public/router.php?route=/settings" class="alt">⚙️ Router Alternativo - SETTINGS</a>
+
+    <h2>3️⃣ ALTRI LINK UTILI:</h2>
+    <a href="/llms-generate/public/start.php">📋 Pagina Start</a>
+    <a href="/llms-generate/public/settings">⚙️ Impostazioni (se rewrite funziona)</a>
+
+    <hr>
+
+    <h2>ℹ️ Informazioni:</h2>
+    <p>Il fatto che hai visto il 404 dell'applicazione significa che:</p>
+    <ul>
+        <li class="success">✅ mod_rewrite È ATTIVO</li>
+        <li class="success">✅ .htaccess VIENE LETTO</li>
+        <li class="success">✅ L'applicazione RICEVE le richieste</li>
+        <li class="warning">⚠️ Ma potrebbe esserci un problema con il base path</li>
+    </ul>
+
+    <h2>🔧 Se i link sopra non funzionano:</h2>
+    <p>1. Verifica che nel file httpd.conf ci sia <code>AllowOverride All</code></p>
+    <p>2. Usa il <strong>Router Alternativo</strong> (link verdi) che funziona SEMPRE</p>
+</body>
+</html>

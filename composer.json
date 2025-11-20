@@ -1,0 +1,15 @@
+{
+  "name": "beweb/llms-txt-generator",
+  "description": "Web app per generare llms.txt a partire da sitemap XML",
+  "require": {
+    "php": "^8.1",
+    "vlucas/phpdotenv": "^5.6",
+    "bramus/router": "^1.6",
+    "guzzlehttp/guzzle": "^7.9"
+  },
+  "autoload": {
+    "psr-4": {
+      "LlmsApp\\": "src/"
+    }
+  }
+}

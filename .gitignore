@@ -1,0 +1,59 @@
+# Dependencies
+/vendor/
+composer.lock
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Storage files
+/storage/
+/storage/llms/
+/storage/llms/*.txt
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Logs
+*.log
+/logs/
+error_log
+access_log
+
+# Cache
+/cache/
+/tmp/
+
+# Backup files
+*.bak
+*.backup
+*.old
+*.orig
+
+# Test files
+/tests/coverage/
+.phpunit.result.cache
+
+# Development files
+/node_modules/
+npm-debug.log
+yarn-error.log
+
+# Database backups
+*.sql
+*.dump
+/backups/
+
+# Custom
+.claude/
+/public/.htaccess.local

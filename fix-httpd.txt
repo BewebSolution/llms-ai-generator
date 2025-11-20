@@ -1,0 +1,35 @@
+# ISTRUZIONI PER SISTEMARE httpd.conf in LARAGON
+
+1. Apri Laragon
+2. Menu → Apache → httpd.conf
+
+3. CERCA questa sezione (usa Ctrl+F per cercare "laragon/www"):
+
+<Directory "C:/laragon/www">
+    Options Indexes FollowSymLinks
+    AllowOverride All          # <-- DEVE essere "All" NON "None"
+    Require all granted
+</Directory>
+
+4. SE trovi AllowOverride None, cambialo in AllowOverride All
+
+5. CERCA ANCHE questa sezione più in basso nel file:
+
+<Directory />
+    AllowOverride none         # <-- Questo può rimanere none
+    Require all denied
+</Directory>
+
+<Directory "C:/laragon/www/">
+    Options FollowSymLinks Includes ExecCGI
+    AllowOverride All          # <-- Anche questo DEVE essere "All"
+    Require all granted
+</Directory>
+
+6. Salva il file
+
+7. IMPORTANTE: Riavvia Apache completamente:
+   - Laragon → Stop All
+   - Laragon → Start All
+
+8. Testa di nuovo
