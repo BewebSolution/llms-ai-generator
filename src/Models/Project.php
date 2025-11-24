@@ -36,8 +36,8 @@ class Project
     {
         $pdo = Database::getConnection();
         $stmt = $pdo->prepare('
-            INSERT INTO projects (name, domain, site_summary, description, slug)
-            VALUES (:name, :domain, :site_summary, :description, :slug)
+            INSERT INTO projects (name, domain, site_summary, description, slug, homepage_url, crawl_depth, max_urls)
+            VALUES (:name, :domain, :site_summary, :description, :slug, :homepage_url, :crawl_depth, :max_urls)
         ');
         $stmt->execute([
             'name'         => $data['name'],
@@ -45,6 +45,9 @@ class Project
             'site_summary' => $data['site_summary'] ?? null,
             'description'  => $data['description'] ?? null,
             'slug'         => $data['slug'],
+            'homepage_url' => $data['homepage_url'] ?? null,
+            'crawl_depth'  => $data['crawl_depth'] ?? 3,
+            'max_urls'     => $data['max_urls'] ?? 500,
         ]);
 
         return (int)$pdo->lastInsertId();
@@ -59,7 +62,10 @@ class Project
                 domain = :domain,
                 site_summary = :site_summary,
                 description = :description,
-                slug = :slug
+                slug = :slug,
+                homepage_url = :homepage_url,
+                crawl_depth = :crawl_depth,
+                max_urls = :max_urls
             WHERE id = :id
         ');
         $stmt->execute([
@@ -68,7 +74,53 @@ class Project
             'site_summary' => $data['site_summary'] ?? null,
             'description'  => $data['description'] ?? null,
             'slug'         => $data['slug'],
+            'homepage_url' => $data['homepage_url'] ?? null,
+            'crawl_depth'  => $data['crawl_depth'] ?? 3,
+            'max_urls'     => $data['max_urls'] ?? 500,
             'id'           => $id,
+        ]);
+    }
+
+    public static function updateCrawlStatus(int $id, string $status, ?string $error = null): void
+    {
+        $pdo = Database::getConnection();
+
+        $sql = 'UPDATE projects SET crawl_status = :status';
+        $params = ['status' => $status, 'id' => $id];
+
+        if ($error !== null) {
+            $sql .= ', crawl_error = :error';
+            $params['error'] = $error;
+        }
+
+        if (in_array($status, ['completed', 'failed', 'stopped'])) {
+            $sql .= ', last_crawl_at = NOW()';
+        }
+
+        $sql .= ' WHERE id = :id';
+
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute($params);
+    }
+
+    public static function updateHomepageUrl(int $id, string $url): void
+    {
+        $pdo = Database::getConnection();
+
+        // Extract domain from URL
+        $parts = parse_url($url);
+        $domain = $parts['host'] ?? '';
+
+        $stmt = $pdo->prepare('
+            UPDATE projects
+            SET homepage_url = :url, domain = :domain
+            WHERE id = :id
+        ');
+
+        $stmt->execute([
+            'url' => $url,
+            'domain' => $domain,
+            'id' => $id,
         ]);
     }
 

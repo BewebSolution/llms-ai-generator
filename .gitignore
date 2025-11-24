@@ -51,6 +51,7 @@ yarn-error.log
 
 # Database backups
 *.sql
+!sql/schema.sql
 *.dump
 /backups/
 
