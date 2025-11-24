@@ -1,17 +1,17 @@
-# Guida Installazione LLMS.txt Generator su XAMPP
+# Guida Installazione LLMS.txt Generator su Laragon
 
 ## Istruzioni per Claude Code
 
-Questa guida contiene tutti i passaggi necessari per installare e configurare l'applicazione LLMS.txt Generator in un ambiente XAMPP locale. Claude Code deve eseguire tutti questi passaggi in sequenza.
+Questa guida contiene tutti i passaggi necessari per installare e configurare l'applicazione LLMS.txt Generator in un ambiente Laragon locale. Claude Code deve eseguire tutti questi passaggi in sequenza.
 
 ---
 
 ## Requisiti
 
-- XAMPP installato con Apache e MySQL attivi
-- PHP 8.1 o superiore
-- Composer installato globalmente
-- Git installato
+- Laragon installato con Apache e MySQL attivi
+- PHP 8.1 o superiore (incluso in Laragon)
+- Composer installato (incluso in Laragon)
+- Git installato (incluso in Laragon)
 
 ## Step 1: Verifica Ambiente
 
@@ -24,28 +24,24 @@ php -v
 # Verifica Composer
 composer --version
 
-# Verifica che MySQL sia attivo (XAMPP deve essere avviato)
+# Verifica che MySQL sia attivo (Laragon deve essere avviato)
 mysql --version
 ```
 
 ## Step 2: Clona Repository
 
-Se non già fatto, clona il repository nella cartella htdocs di XAMPP:
+Clona il repository nella cartella www di Laragon:
 
 ```bash
-# Su Windows tipicamente:
-cd C:/xampp/htdocs
-
-# Su macOS:
-cd /Applications/XAMPP/htdocs
-
-# Su Linux:
-cd /opt/lampp/htdocs
+# Su Windows (percorso standard Laragon):
+cd C:/laragon/www
 
 # Clona il repository
 git clone https://github.com/BewebSolution/llms-ai-generator.git
 cd llms-ai-generator
 ```
+
+**NOTA Laragon**: Laragon crea automaticamente un virtual host per ogni cartella in `www`. Dopo la clonazione, l'app sarà accessibile su `http://llms-ai-generator.test` (se hai abilitato i pretty URLs in Laragon).
 
 ## Step 3: Installa Dipendenze PHP
 
@@ -80,7 +76,12 @@ OPENAI_MODEL=gpt-3.5-turbo
 OPENAI_TEMPERATURE=0.7
 ```
 
-**NOTA**: Su XAMPP la password di root MySQL è vuota di default. Se hai impostato una password, modificala nel file .env.
+**NOTA Laragon**: La password di root MySQL in Laragon è vuota di default.
+
+**Se usi il virtual host automatico di Laragon**, modifica APP_BASE_PATH:
+```env
+APP_BASE_PATH=
+```
 
 ## Step 5: Crea Database e Schema
 
@@ -281,22 +282,29 @@ Su Windows, assicurati che la cartella `storage` sia scrivibile.
 
 ## Step 7: Verifica Configurazione Apache
 
-Il file `.htaccess` nella cartella `public/` dovrebbe già essere configurato correttamente. Verifica che mod_rewrite sia abilitato in XAMPP:
+Il file `.htaccess` nella cartella `public/` dovrebbe già essere configurato correttamente.
 
-1. Apri `C:\xampp\apache\conf\httpd.conf` (o equivalente)
-2. Trova la riga `#LoadModule rewrite_module modules/mod_rewrite.so`
-3. Rimuovi il `#` se presente per abilitare mod_rewrite
-4. Riavvia Apache
+**Laragon**: mod_rewrite è già abilitato di default in Laragon. Non serve configurazione aggiuntiva.
+
+Se necessario, puoi verificare in `C:\laragon\bin\apache\httpd-xxx\conf\httpd.conf` che la riga `LoadModule rewrite_module modules/mod_rewrite.so` non sia commentata.
 
 ## Step 8: Test Applicazione
 
 Apri il browser e vai a:
 
+**Opzione 1 - Virtual Host Laragon (consigliato)**:
+```
+http://llms-ai-generator.test/public/
+```
+
+**Opzione 2 - Localhost standard**:
 ```
 http://localhost/llms-ai-generator/public/
 ```
 
 Dovresti vedere la homepage dell'applicazione con la lista dei progetti (vuota inizialmente).
+
+**NOTA**: Se usi il virtual host `.test`, potresti dover riavviare Laragon (tasto destro su Laragon > Apache > Reload) per attivare il nuovo virtual host.
 
 ## Step 9: Primo Utilizzo
 
@@ -329,16 +337,17 @@ composer dump-autoload
 ```
 
 ### Errore connessione database
-- Verifica che MySQL sia attivo nel pannello XAMPP
+- Verifica che MySQL sia attivo nel pannello Laragon
 - Controlla le credenziali nel file `.env`
 - Verifica che il database `llms_app` esista
+- In Laragon puoi usare HeidiSQL (incluso) per gestire il database
 
 ### Pagina bianca o errore 500
-- Abilita `display_errors` in `php.ini`
-- Controlla i log di Apache: `C:\xampp\apache\logs\error.log`
+- Abilita `display_errors` in `php.ini` (Laragon > PHP > php.ini)
+- Controlla i log di Apache: `C:\laragon\bin\apache\httpd-xxx\logs\error.log`
 
 ### mod_rewrite non funziona
-- Verifica che sia abilitato in `httpd.conf`
+- In Laragon mod_rewrite è abilitato di default
 - Verifica che `AllowOverride All` sia impostato per la directory
 
 ### Errore permessi storage
@@ -368,10 +377,26 @@ mysql -u root -p llms_app -e "SHOW TABLES;"
 
 ## Struttura URL dell'Applicazione
 
+**Con Virtual Host Laragon (consigliato)**:
+- Homepage: `http://llms-ai-generator.test/public/`
+- Nuovo progetto: `http://llms-ai-generator.test/public/projects/create`
+- Impostazioni: `http://llms-ai-generator.test/public/settings`
+- Costi AI: `http://llms-ai-generator.test/public/costs`
+- File llms.txt: `http://llms-ai-generator.test/public/llms/{slug-progetto}.txt`
+
+**Con Localhost standard**:
 - Homepage: `http://localhost/llms-ai-generator/public/`
 - Nuovo progetto: `http://localhost/llms-ai-generator/public/projects/create`
 - Impostazioni: `http://localhost/llms-ai-generator/public/settings`
 - Costi AI: `http://localhost/llms-ai-generator/public/costs`
+- File llms.txt: `http://localhost/llms-ai-generator/public/llms/{slug-progetto}.txt`
 
-I file llms.txt generati saranno disponibili su:
-`http://localhost/llms-ai-generator/public/llms/{slug-progetto}.txt`
+---
+
+## Note Specifiche Laragon
+
+1. **Virtual Hosts automatici**: Laragon crea automaticamente un virtual host `.test` per ogni cartella in `www`
+2. **HeidiSQL**: Usa HeidiSQL (incluso in Laragon) per gestire visualmente il database
+3. **Terminal**: Usa il terminale integrato di Laragon (tasto destro > Terminal) che ha già PHP, MySQL e Composer nel PATH
+4. **Reload Apache**: Dopo modifiche, ricarica Apache da Laragon > Apache > Reload
+5. **Pretty URLs**: Assicurati che "Auto create virtual hosts" sia attivo in Preferenze
