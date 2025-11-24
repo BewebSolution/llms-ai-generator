@@ -88,6 +88,12 @@ if (!$needsSetup) {
     $router->get('/projects/{id}/llms/preview', '\LlmsApp\Controllers\LlmsController@preview');
     $router->post('/projects/{id}/llms/generate', '\LlmsApp\Controllers\LlmsController@generate');
 
+    // Crawl - DEVE essere PRIMA di /projects/{id}
+    $router->get('/projects/{id}/crawl', '\LlmsApp\Controllers\CrawlController@progress');
+    $router->post('/projects/{id}/crawl/start', '\LlmsApp\Controllers\CrawlController@startAsync');
+    $router->post('/projects/{id}/crawl/stop', '\LlmsApp\Controllers\CrawlController@stop');
+    $router->get('/api/projects/{id}/crawl/status', '\LlmsApp\Controllers\CrawlController@status');
+
     // Project edit/update/delete - DEVE essere PRIMA di /projects/{id}
     $router->get('/projects/{id}/edit', '\LlmsApp\Controllers\ProjectController@edit');
     $router->post('/projects/{id}/update', '\LlmsApp\Controllers\ProjectController@update');

@@ -25,9 +25,18 @@ class ProjectController
         $slug = trim($_POST['slug'] ?? '');
         $siteSummary = trim($_POST['site_summary'] ?? '');
         $description = trim($_POST['description'] ?? '');
+        $homepageUrl = trim($_POST['homepage_url'] ?? '');
+        $crawlDepth = (int)($_POST['crawl_depth'] ?? 3);
+        $maxUrls = (int)($_POST['max_urls'] ?? 500);
 
         if ($slug === '') {
             $slug = $this->slugify($name);
+        }
+
+        // Extract domain from homepage URL if provided
+        if (!empty($homepageUrl) && empty($domain)) {
+            $parts = parse_url($homepageUrl);
+            $domain = $parts['host'] ?? '';
         }
 
         $projectId = Project::create([
@@ -36,11 +45,19 @@ class ProjectController
             'site_summary' => $siteSummary,
             'description'  => $description,
             'slug'         => $slug,
+            'homepage_url' => $homepageUrl,
+            'crawl_depth'  => $crawlDepth,
+            'max_urls'     => $maxUrls,
         ]);
 
         Section::createDefaultsForProject($projectId);
 
-        header('Location: ' . $this->baseUrl() . '/projects/' . $projectId);
+        // Redirect to crawl page if homepage URL is provided
+        if (!empty($homepageUrl)) {
+            header('Location: ' . $this->baseUrl() . '/projects/' . $projectId . '/crawl');
+        } else {
+            header('Location: ' . $this->baseUrl() . '/projects/' . $projectId);
+        }
         exit;
     }
 
@@ -70,6 +87,9 @@ class ProjectController
         $slug = trim($_POST['slug'] ?? '');
         $siteSummary = trim($_POST['site_summary'] ?? '');
         $description = trim($_POST['description'] ?? '');
+        $homepageUrl = trim($_POST['homepage_url'] ?? '');
+        $crawlDepth = (int)($_POST['crawl_depth'] ?? 3);
+        $maxUrls = (int)($_POST['max_urls'] ?? 500);
 
         if ($slug === '') {
             $slug = $this->slugify($name);
@@ -81,6 +101,9 @@ class ProjectController
             'site_summary' => $siteSummary,
             'description'  => $description,
             'slug'         => $slug,
+            'homepage_url' => $homepageUrl,
+            'crawl_depth'  => $crawlDepth,
+            'max_urls'     => $maxUrls,
         ]);
 
         header('Location: ' . $this->baseUrl() . '/projects/' . $id);
