@@ -21,13 +21,20 @@ ALTER TABLE projects
 -- 2. Aggiungi indice per crawl_status
 ALTER TABLE projects ADD INDEX idx_crawl_status (crawl_status);
 
--- 3. Aggiungi nuove colonne alla tabella urls
+-- 3. Aggiorna ENUM type nella tabella urls con nuovi tipi di classificazione
+ALTER TABLE urls MODIFY COLUMN type ENUM(
+    'HOMEPAGE', 'LANGUAGE', 'COUNTRY', 'PROMOTION', 'CATEGORY',
+    'PRODUCT', 'BRAND', 'FEATURE', 'SUPPORT', 'POLICY',
+    'COMPANY', 'BLOG', 'OTHER'
+) DEFAULT 'OTHER';
+
+-- 4. Aggiungi nuove colonne alla tabella urls
 ALTER TABLE urls
     ADD COLUMN content_hash VARCHAR(64) AFTER is_selected,
     ADD COLUMN crawl_depth INT DEFAULT 0 AFTER content_hash,
     ADD COLUMN http_status INT AFTER crawl_depth;
 
--- 4. Crea tabella crawl_queue
+-- 5. Crea tabella crawl_queue
 CREATE TABLE IF NOT EXISTS crawl_queue (
     id INT AUTO_INCREMENT PRIMARY KEY,
     project_id INT NOT NULL,
@@ -43,7 +50,7 @@ CREATE TABLE IF NOT EXISTS crawl_queue (
     UNIQUE KEY unique_project_url (project_id, url)
 ) ENGINE=InnoDB;
 
--- 5. Crea tabella crawl_stats
+-- 6. Crea tabella crawl_stats
 CREATE TABLE IF NOT EXISTS crawl_stats (
     id INT AUTO_INCREMENT PRIMARY KEY,
     project_id INT NOT NULL UNIQUE,
