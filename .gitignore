@@ -56,5 +56,4 @@ yarn-error.log
 /backups/
 
 # Custom
-.claude/
 /public/.htaccess.local
